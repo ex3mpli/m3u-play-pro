@@ -4,8 +4,7 @@ A modern, browser-based IPTV player that supports M3U playlists, HLS/MPD streams
 
 ![M3U Play Pro](https://img.shields.io/badge/IPTV-Player-blue) ![DRM](https://img.shields.io/badge/DRM-ClearKey-orange) ![License](https://img.shields.io/badge/license-MIT-green)
 
-## Demo
-<a href="https://ex3mpli.github.io/m3u-play-pro/index.html" target="_blank" rel="noopener noreferrer">Click Here to Open in New Tab</a>
+### <a href="https://ex3mpli.github.io/m3u-play-pro/index.html" target="_blank" rel="noopener noreferrer">Demo</a>
 
 ## Features
 
