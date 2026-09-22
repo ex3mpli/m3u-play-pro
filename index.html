@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="ml">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>M3U Play Pro – Modern IPTV</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <script src="https://ssl.p.jwpcdn.com/player/v/8.48.1/jwplayer.js"></script>
+    <script>
+        jwplayer.key = "jTL7dlu7ybUI5NZnDdVgb1laM8/Hj3ftIJ5Vqg==";
+    </script>
+
+    <style>
+        :root {
+          --primary: #4f46e5;
+          --secondary: #e11d48; 
+          --accent: #059669;    
+          --warning: #d97706;
+          --dark-bg: #f8fafc;
+          --glass: rgba(0, 0, 0, 0.04);
+          --glass-border: rgba(0, 0, 0, 0.1);
+          --text-main: #1e293b;
+          --text-dim: #64748b;
+          --radius-lg: 16px;
+          --radius-sm: 10px;
+        }
+    
+        * { box-sizing: border-box; transition: all 0.2s ease; font-family: 'Plus Jakarta Sans', sans-serif; }
+    
+        body {
+          margin: 0;
+          background: radial-gradient(circle at center, #ffffff, #f1f5f9);
+          color: var(--text-main);
+          height: 100vh;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+        }
+    
+        header {
+          background: rgba(255, 255, 255, 0.85);
+          backdrop-filter: blur(20px);
+          padding: 0.8rem 2rem;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          border-bottom: 1px solid var(--glass-border);
+          flex-shrink: 0;
+        }
+    
+        .logo { font-size: 1.4rem; font-weight: 800; background: linear-gradient(to right, #4f46e5, #e11d48); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    
+        #main { display: flex; flex: 1; padding: 15px; gap: 15px; overflow: hidden; }
+    
+        .sidebar {
+          width: 320px;
+          background: #ffffff;
+          backdrop-filter: blur(15px);
+          border: 1px solid var(--glass-border);
+          border-radius: var(--radius-lg);
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+    
+        #channel-sidebar { display: none; }
+    
+        .sidebar-header { padding: 15px; font-weight: 700; border-bottom: 1px solid var(--glass-border); display: flex; align-items: center; gap: 10px; color: var(--primary); text-transform: uppercase; font-size: 0.8rem; flex-shrink: 0; }
+    
+        #player-container { flex: 1; display: flex; flex-direction: column; gap: 12px; overflow: hidden; }
+    
+        #player { 
+          width: 100%; 
+          background: #000; 
+          border-radius: var(--radius-lg); 
+          overflow: hidden; 
+          aspect-ratio: 16 / 9; 
+          border: 1px solid var(--glass-border);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          position: relative;
+        }
+    
+        .player-placeholder {
+          text-align: center;
+          color: #94a3b8;
+        }
+        .player-placeholder i { font-size: 3rem; margin-bottom: 10px; opacity: 0.5; }
+    
+        .link-display-bar {
+          display: flex;
+          background: #ffffff;
+          border: 1px solid var(--glass-border);
+          border-radius: var(--radius-sm);
+          padding: 8px 12px;
+          align-items: center;
+          gap: 10px;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+    
+        #stream-link-text { flex: 1; font-size: 0.8rem; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        /* ---- DRM Key bar (matches Link bar styling) ---- */
+        .key-display-bar {
+          display: none;               /* toggled by JS */
+          background: #ffffff;
+          border: 1px solid var(--glass-border);
+          border-radius: var(--radius-sm);
+          padding: 8px 12px;
+          align-items: center;
+          gap: 10px;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .key-display-bar.visible { display: flex; }
+
+        .key-label {
+          font-size: 0.75rem;
+          font-weight: bold;
+          color: var(--warning);
+          display: flex;
+          align-items: center;
+          gap: 5px;
+          flex-shrink: 0;
+        }
+
+        #stream-key-text {
+          flex: 1;
+          font-size: 0.8rem;
+          color: var(--text-dim);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          font-family: 'Courier New', monospace;
+        }
+    
+        .copy-btn { background: var(--primary); padding: 6px 12px; font-size: 0.75rem; border-radius: 6px; border:none; color:white; cursor:pointer;}
+        .copy-btn:hover { opacity: 0.9; }
+    
+        .search-container { padding: 12px; border-bottom: 1px solid var(--glass-border); }
+        #channel-list { flex: 1; overflow-y: auto; padding: 12px; }
+        #channel-list::-webkit-scrollbar { width: 5px; }
+        #channel-list::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    
+        .channel-card { display: flex; align-items: center; padding: 10px; margin-bottom: 8px; background: #f1f5f9; border-radius: var(--radius-sm); cursor: pointer; border-left: 4px solid transparent; }
+        .channel-card:hover { background: #e2e8f0; transform: translateX(3px); }
+        
+        .channel-card.working { border-left-color: var(--accent) !important; background: #ecfdf5; }
+        .channel-card.broken { border-left-color: var(--secondary) !important; background: #fff1f2; }
+        .channel-card.unknown { border-left-color: var(--warning) !important; background: #fffbeb; }
+    
+        .ch-thumb { width: 40px; height: 30px; margin-right: 12px; display: flex; align-items: center; justify-content: center; background: #e2e8f0; border-radius: 4px; flex-shrink: 0; }
+        .ch-thumb img { width: 100%; height: 100%; object-fit: contain; }
+        .ch-thumb i { color: var(--text-dim); font-size: 1.1rem; }
+    
+        .ch-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+        .ch-name { font-size: 0.8rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .ch-meta { display: flex; gap: 6px; align-items: center; }
+        .drm-badge { font-size: 0.6rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; background: #fef3c7; color: #92400e; text-transform: uppercase; letter-spacing: 0.3px; display: inline-flex; align-items: center; gap: 3px; }
+        .drm-badge i { font-size: 0.55rem; }
+    
+        .input-group { padding: 15px; display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; }
+        input { background: #ffffff; border: 1px solid #cbd5e1; padding: 10px; border-radius: var(--radius-sm); color: #1e293b; outline: none; font-size: 0.85rem; width: 100%; }
+        input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1); }
+        
+        button { background: var(--primary); color: white; border: none; padding: 10px; border-radius: var(--radius-sm); font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.85rem; }
+        
+        .btn-test { background: var(--accent) !important; }
+        .btn-secondary { background: #f1f5f9; border: 1px solid #cbd5e1; color: #475569; }
+        .btn-secondary:hover { background: #e2e8f0; }
+    
+        .progress-wrapper { padding: 0 15px 15px 15px; display: none; flex-shrink: 0; }
+        .progress-container { background: #e2e8f0; height: 6px; border-radius: 10px; overflow: hidden; margin-top: 5px; }
+        .progress-bar { width: 0%; height: 100%; background: linear-gradient(90deg, var(--primary), var(--accent)); transition: width 0.2s ease; }
+    
+        footer { padding: 8px 30px; background: #ffffff; display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-dim); border-top: 1px solid var(--glass-border); flex-shrink: 0; }
+    
+        @media (max-width: 1024px) { body { overflow-y: auto; height: auto; } #main { flex-direction: column; height: auto; } .sidebar { width: 100%; height: auto; min-height: 400px; } #player-container { order: -1; } }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div class="logo"><i class="fas fa-play-circle"></i> M3U PLAY PRO</div>
+        <div class="nav-actions">
+            <button class="btn-secondary" onclick="window.open('https://ex3mpli.github.io/m3u-play-pro/index.html/#', '_blank')"><i class="fas fa-satellite"></i> LIVE TV</button>
+        </div>
+    </header>
+
+    <div id="main">
+        <div class="sidebar">
+            <div class="sidebar-header"><i class="fas fa-bolt"></i> Quick Play (DRM Support)</div>
+            <div class="input-group">
+                <input type="text" id="streamUrl" placeholder="Stream URL (m3u8/mpd)">
+                <input type="text" id="keyId" placeholder="ClearKey ID">
+                <input type="text" id="keyValue" placeholder="ClearKey Value">
+                <button onclick="playCustomStream()"><i class="fas fa-play"></i> Launch Stream</button>
+            </div>
+
+            <div class="sidebar-header" style="border-top: 1px solid var(--glass-border);"><i class="fas fa-folder"></i> Library</div>
+            <div class="input-group">
+                <button class="btn-secondary" onclick="document.getElementById('fileInput').click()"><i class="fas fa-file-upload"></i> Load M3U File</button>
+                <input type="file" id="fileInput" accept=".m3u,.m3u8" style="display:none;">
+                <button class="btn-test" id="testBtn" onclick="checkM3U8Links()"><i class="fas fa-check-double"></i> Verify All Links</button>
+            </div>
+
+            <div class="progress-wrapper" id="tester-ui">
+                <div id="progress-text" style="font-size: 0.7rem;">Initializing...</div>
+                <div class="progress-container">
+                    <div class="progress-bar" id="p-bar"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="player-container">
+            <div id="player">
+                <div class="player-placeholder" id="placeholder-content">
+                    <i class="fas fa-play-circle"></i>
+                    <div>Ready to play</div>
+                </div>
+            </div>
+
+            <!-- Stream URL bar -->
+            <div class="link-display-bar">
+                <span style="font-size: 0.75rem; font-weight: bold; color: var(--primary);">LINK:</span>
+                <div id="stream-link-text">No stream active</div>
+                <button class="copy-btn" id="copyBtn" onclick="copyStreamLink()"><i class="fas fa-copy"></i> Copy</button>
+            </div>
+
+            <!-- DRM Key bar (shown only for DRM streams) -->
+            <div class="key-display-bar" id="key-bar">
+                <span class="key-label"><i class="fas fa-key"></i> KEY:</span>
+                <div id="stream-key-text">—</div>
+                <button class="copy-btn" id="copyKeyBtn" onclick="copyStreamKey()"><i class="fas fa-copy"></i> Copy</button>
+            </div>
+
+            <div id="status-bar" style="font-size: 0.85rem; color: var(--text-dim); min-height: 1.2rem;"></div>
+        </div>
+
+        <div class="sidebar" id="channel-sidebar">
+            <div class="sidebar-header"><i class="fas fa-tv"></i> Channels (<span id="ch-count">0</span>)</div>
+            <div class="search-container">
+                <input type="text" id="search" placeholder="🔍 Search channels...">
+            </div>
+            <div id="channel-list"></div>
+        </div>
+    </div>
+
+    <footer>
+        <div>© 2026 M3U Play Pro</div>
+    </footer>
+
+    <script>
+        let channels = [], player = null;
+
+    /* ---------------------------------------------------------------
+       Show / hide the DRM key bar
+       --------------------------------------------------------------- */
+    function setKeyBar(drmConfig) {
+      const bar = document.getElementById('key-bar');
+      const text = document.getElementById('stream-key-text');
+
+      if (drmConfig && drmConfig.clearkey && drmConfig.clearkey.keyId && drmConfig.clearkey.key) {
+        const display = `${drmConfig.clearkey.keyId}:${drmConfig.clearkey.key}`;
+        text.innerText = display;
+        text.title = display;
+        bar.classList.add('visible');
+      } else {
+        text.innerText = '—';
+        text.title = '';
+        bar.classList.remove('visible');
+      }
+    }
+
+    function createPlayer(url, drmConfig = null) {
+      const playerDiv = document.getElementById("player");
+      
+      if (player) {
+        jwplayer("player").remove();
+        playerDiv.innerHTML = ""; 
+      } else {
+        playerDiv.innerHTML = "";
+      }
+
+      const setup = { 
+        file: url, 
+        width: "100%", 
+        aspectratio: "16:9", 
+        autostart: true, 
+        stretching: "uniform" 
+      };
+
+      if (drmConfig) setup.drm = drmConfig;
+      
+      player = jwplayer("player").setup(setup);
+      document.getElementById('stream-link-text').innerText = url;
+      setKeyBar(drmConfig);
+
+      player.on('play', () => {
+        const drmTag = drmConfig ? ` <span class="drm-badge"><i class="fas fa-lock"></i> DRM</span>` : '';
+        document.getElementById('status-bar').innerHTML = `<span style="color:var(--accent)"><i class="fas fa-signal"></i> LIVE</span>${drmTag}`;
+      });
+
+      player.on('error', (e) => {
+        document.getElementById('status-bar').innerHTML = `<span style="color:var(--secondary)"><i class="fas fa-exclamation-triangle"></i> Error: ${e.message}</span>`;
+      });
+    }
+
+    function copyStreamLink() {
+      const linkText = document.getElementById('stream-link-text').innerText;
+      if (linkText === "No stream active") return;
+      navigator.clipboard.writeText(linkText).then(() => {
+        const btn = document.getElementById('copyBtn');
+        const original = btn.innerHTML;
+        btn.innerHTML = `<i class="fas fa-check"></i> Copied!`;
+        setTimeout(() => btn.innerHTML = original, 2000);
+      });
+    }
+
+    function copyStreamKey() {
+      const keyText = document.getElementById('stream-key-text').innerText;
+      if (!keyText || keyText === '—') return;
+      navigator.clipboard.writeText(keyText).then(() => {
+        const btn = document.getElementById('copyKeyBtn');
+        const original = btn.innerHTML;
+        btn.innerHTML = `<i class="fas fa-check"></i> Copied!`;
+        setTimeout(() => btn.innerHTML = original, 2000);
+      });
+    }
+
+    function playCustomStream() {
+      const url = document.getElementById("streamUrl").value.trim();
+      const kid = document.getElementById("keyId").value.trim();
+      const kval = document.getElementById("keyValue").value.trim();
+      if (!url) return;
+      let drm = (kid && kval) ? { clearkey: { keyId: kid, key: kval } } : null;
+      createPlayer(url, drm);
+    }
+
+    document.getElementById('fileInput').addEventListener('change', e => {
+      const reader = new FileReader();
+      reader.onload = (ev) => parseM3U(ev.target.result);
+      reader.readAsText(e.target.files[0]);
+    });
+
+    /* ---------------------------------------------------------------
+       M3U Parser with KODIPROP ClearKey DRM support
+       --------------------------------------------------------------- */
+    function parseM3U(content) {
+      channels = [];
+      const lines = content.split(/\r?\n/).map(l => l.trim());
+      let pending = null;
+
+      const isClearKey = (type) =>
+        /clearkey|org\.w3\.clearkey|clearkey\.drm/i.test(type || '');
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+
+        if (!line) continue;
+
+        if (line.startsWith("#EXTINF")) {
+          const name = line.split(",").slice(1).join(",").trim() || "Unknown";
+          const logo = line.match(/tvg-logo="(.*?)"/i)?.[1] || "";
+          pending = {
+            name,
+            logo,
+            url: "",
+            status: "",
+            drm: null,
+            licenseType: null,
+            licenseKey: null
+          };
+          continue;
+        }
+
+        if (line.startsWith("#KODIPROP:")) {
+          const prop = line.substring("#KODIPROP:".length);
+          const eq = prop.indexOf("=");
+          if (eq === -1) continue;
+          const key = prop.substring(0, eq).trim().toLowerCase();
+          const value = prop.substring(eq + 1).trim();
+
+          if (!pending) pending = { name: "Unknown", logo: "", url: "", status: "", drm: null, licenseType: null, licenseKey: null };
+
+          if (key === "inputstream.adaptive.license_type") {
+            pending.licenseType = value;
+          } else if (key === "inputstream.adaptive.license_key") {
+            pending.licenseKey = value;
+          }
+          continue;
+        }
+
+        if (line.startsWith("#")) continue;
+
+        if (line.startsWith("http")) {
+          if (!pending) {
+            channels.push({
+              name: "Unknown",
+              logo: "",
+              url: line,
+              status: "",
+              drm: null
+            });
+            continue;
+          }
+
+          pending.url = line;
+
+          if (isClearKey(pending.licenseType) && pending.licenseKey) {
+            const parts = pending.licenseKey.split(":");
+            if (parts.length >= 2 && parts[0] && parts[1]) {
+              pending.drm = {
+                clearkey: {
+                  keyId: parts[0].trim(),
+                  key: parts[1].trim()
+                }
+              };
+            }
+          }
+
+          channels.push(pending);
+          pending = null;
+        }
+      }
+
+      if (channels.length > 0) {
+        document.getElementById('channel-sidebar').style.display = 'flex';
+      }
+
+      document.getElementById('ch-count').innerText = channels.length;
+      renderChannels();
+    }
+
+    function renderChannels() {
+      const list = document.getElementById("channel-list");
+      const search = document.getElementById("search").value.toLowerCase();
+      list.innerHTML = "";
+      channels.filter(ch => ch.name.toLowerCase().includes(search)).forEach(ch => {
+        const div = document.createElement("div");
+        div.className = `channel-card ${ch.status}`;
+        const logoHtml = ch.logo
+          ? `<img src="${ch.logo}" onerror="this.parentElement.innerHTML='<i class=\\'fa-solid fa-tv\\'></i>'">`
+          : `<i class="fa-solid fa-tv"></i>`;
+
+        const drmBadge = ch.drm
+          ? `<span class="drm-badge"><i class="fas fa-lock"></i> ClearKey</span>`
+          : '';
+
+        div.innerHTML = `
+          <div class="ch-thumb">${logoHtml}</div>
+          <div class="ch-info">
+            <span class="ch-name">${ch.name}</span>
+            <div class="ch-meta">${drmBadge}</div>
+          </div>
+        `;
+        div.onclick = () => createPlayer(ch.url, ch.drm);
+        list.appendChild(div);
+      });
+    }
+
+    function testRegularStream(url) {
+      return new Promise((resolve) => {
+        const testVideo = document.createElement('video');
+        const timeout = setTimeout(() => {
+          testVideo.src = "";
+          resolve(false);
+        }, 5000);
+
+        testVideo.onloadedmetadata = () => {
+          clearTimeout(timeout);
+          testVideo.src = "";
+          resolve(true);
+        };
+
+        testVideo.onerror = () => {
+          clearTimeout(timeout);
+          resolve(false);
+        };
+
+        testVideo.src = url;
+      });
+    }
+
+    async function testDrmStream(url) {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5000);
+      try {
+        const res = await fetch(url, { method: 'GET', signal: controller.signal });
+        clearTimeout(timeout);
+        return res.ok ? 'working' : 'broken';
+      } catch (err) {
+        clearTimeout(timeout);
+        return 'unknown';
+      }
+    }
+
+    async function checkM3U8Links() {
+      if (channels.length === 0) return alert("Load playlist!");
+      const ui = document.getElementById('tester-ui');
+      const pBar = document.getElementById('p-bar');
+      const pText = document.getElementById('progress-text');
+      ui.style.display = 'block';
+
+      for (let i = 0; i < channels.length; i++) {
+        const ch = channels[i];
+        pText.innerText = `Verifying ${i + 1}/${channels.length}${ch.drm ? ' (DRM)' : ''}`;
+        pBar.style.width = `${((i + 1) / channels.length) * 100}%`;
+
+        let status;
+        if (ch.drm) {
+          status = await testDrmStream(ch.url);
+        } else {
+          status = (await testRegularStream(ch.url)) ? 'working' : 'broken';
+        }
+
+        channels[i].status = status;
+        if (i % 3 === 0 || i === channels.length - 1) renderChannels();
+      }
+      setTimeout(() => ui.style.display = 'none', 3000);
+    }
+
+    document.getElementById("search").addEventListener("input", renderChannels);
+    </script>
+</body>
+
+</html>
